@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Text Summarizer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    .dark-mode {
+      background: linear-gradient(to right, #1f1f1f, #121212);
+      color: #f5f5f5;
+    }
+
+    .container {
+      max-width: 780px;
+      margin: 60px auto;
+      padding: 35px 30px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.15);
+      transition: background 0.4s, color 0.4s;
+    }
+
+    .dark-mode .container {
+      background: rgba(33, 33, 33, 0.85);
+      color: #fff;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 36px;
+      margin-bottom: 25px;
+      color: #0066ff;
+    }
+
+    .dark-mode h2 {
+      color: #4dabf7;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 160px;
+      padding: 18px;
+      font-size: 16px;
+      border: none;
+      border-radius: 14px;
+      background: #f9fbfe;
+      box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.05);
+      transition: background 0.3s, color 0.3s;
+      resize: vertical;
+    }
+
+    .dark-mode textarea {
+      background: #2e2e2e;
+      color: #fff;
+    }
+
+    .buttons {
+      margin-top: 30px;
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    button, .upload-label {
+      padding: 14px 20px;
+      font-size: 16px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      border: none;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      background: linear-gradient(to right, #4facfe, #00f2fe);
+      color: #fff;
+      box-shadow: 0 5px 18px rgba(0, 123, 255, 0.25);
+    }
+
+    button:hover, .upload-label:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 8px 22px rgba(0, 123, 255, 0.4);
+    }
+
+    .upload-label {
+      background: linear-gradient(to right, #f7971e, #ffd200);
+      color: #000;
+      box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .summary-box {
+      margin-top: 35px;
+      padding: 20px;
+      border-radius: 14px;
+      background-color: #f1f4f9;
+      color: #333;
+      min-height: 60px;
+      white-space: pre-wrap;
+      box-shadow: inset 0 0 6px rgba(0,0,0,0.06);
+      transition: background 0.3s;
+    }
+
+    .dark-mode .summary-box {
+      background-color: #2d2d2d;
+      color: #f0f0f0;
+    }
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+      display: none;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg);}
+      100% { transform: rotate(360deg);}
+    }
+
+    .theme-toggle {
+      margin-top: 25px;
+      text-align: center;
+    }
+
+    .theme-toggle label {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .score-display {
+      margin-top: 12px;
+      font-size: 15px;
+      color: #555;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .dark-mode .score-display {
+      color: #ccc;
+    }
+
+    .status-message {
+      margin-top: 15px;
+      font-size: 14px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .success {
+      color: #28a745;
+    }
+
+    .error {
+      color: #d9534f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Text Summarizer</h2>
+    <textarea id="inputText" placeholder="Paste or type your text here..."></textarea>
+
+    <div class="buttons">
+      <button onclick="summarize('extractive')">Extractive Summary</button>
+      <button onclick="summarize('abstractive')">Abstractive Summary</button>
+      <label for="fileInput" class="upload-label">Upload PDF</label>
+      <input type="file" id="fileInput" accept=".pdf"/>
+    </div>
+
+    <div class="loader" id="loader"></div>
+    <div class="status-message" id="statusMessage"></div>
+    <div class="summary-box" id="summary">Your summary will appear here...</div>
+    <div class="score-display" id="scoreDisplay"></div>
+
+    <div class="theme-toggle">
+      <label><input type="checkbox" onchange="toggleTheme()"> Enable Dark Mode</label>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
+    }
+
+    function summarize(type) {
+      let text = document.getElementById("inputText").value.trim();
+      let fileInput = document.getElementById("fileInput").files[0];
+      let summaryBox = document.getElementById("summary");
+      let loader = document.getElementById("loader");
+      let statusMsg = document.getElementById("statusMessage");
+      let scoreDisplay = document.getElementById("scoreDisplay");
+
+      summaryBox.innerHTML = "";
+      statusMsg.innerHTML = "";
+      scoreDisplay.innerHTML = "";
+      loader.style.display = "block";
+
+      let formData;
+      let isFile = !!fileInput;
+
+      if (isFile) {
+        formData = new FormData();
+        formData.append("file", fileInput);
+        formData.append("type", type);
+      } else if (text !== "") {
+        formData = JSON.stringify({ text: text, type: type });
+      } else {
+        loader.style.display = "none";
+        statusMsg.innerHTML = "Please enter text or upload a PDF.";
+        statusMsg.className = "status-message error";
+        return;
+      }
+
+      fetch("/summarize", {
+        method: "POST",
+        body: formData,
+        headers: isFile ? {} : { "Content-Type": "application/json" }
+      })
+      .then(res => res.json())
+      .then(data => {
+        loader.style.display = "none";
+        if (data.summary) {
+          summaryBox.innerHTML = data.summary;
+          statusMsg.innerHTML = "Summary generated successfully!";
+          statusMsg.className = "status-message success";
+          if (data.score !== undefined) {
+            scoreDisplay.innerHTML = `Similarity Score: ${data.score.toFixed(2)}`;
+          }
+        } else {
+          summaryBox.innerHTML = "";
+          statusMsg.innerHTML = "Something went wrong.";
+          statusMsg.className = "status-message error";
+        }
+      })
+      .catch(err => {
+        loader.style.display = "none";
+        summaryBox.innerHTML = "";
+        statusMsg.innerHTML = "Server error. Try again.";
+        statusMsg.className = "status-message error";
+        console.error(err);
+      });
+    }
+  </script>
+</body>
+</html>
