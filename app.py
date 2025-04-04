@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 from transformers import pipeline
-from summarizer import Summarizer
+from summarizer.bert import BertSummarizer
 import PyPDF2
 import nltk
 from rouge_score import rouge_scorer
@@ -14,7 +14,7 @@ app = Flask(__name__)
 
 # Load summarization models once to avoid redundant loading
 abstractive_summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-extractive_summarizer = Summarizer()
+extractive_summarizer = BertSummarizer()
 
 def extract_text_from_pdf(pdf_file):
     """Extract text from an uploaded PDF file."""
