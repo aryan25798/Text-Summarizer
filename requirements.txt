@@ -1,9 +1,8 @@
+gunicorn
 flask
 transformers
-bert-extractive-summarizer
-pypdf2
-rouge-score
-nltk
-gunicorn
 torch
-
+PyPDF2
+nltk
+rouge-score
+summarizer
