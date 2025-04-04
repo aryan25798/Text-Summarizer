@@ -1,8 +1,9 @@
 flask
 gunicorn
-transformers
 torch
-summarizer==0.0.7
+transformers
+sentencepiece
+bert-extractive-summarizer
 PyPDF2
 nltk
 rouge-score
