@@ -5,4 +5,5 @@ pypdf2
 rouge-score
 nltk
 gunicorn
+torch
 
