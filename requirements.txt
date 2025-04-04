@@ -1,7 +1,6 @@
-Flask==3.1.0
-gunicorn==22.0.0
-transformers==4.49.0
-summarizer==0.10.1
-nltk==3.9.1
-PyPDF2==3.0.1
-rouge-score==0.1.2
+flask
+transformers
+bert-extractive-summarizer
+pypdf2
+rouge-score
+nltk
