@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify, render_template
 from transformers import pipeline
-from summarizer import Summarizer  # Fixed BertSummarizer import
+from summarizer import Summarizer  # Using BERT Extractive Summarizer
 import PyPDF2
 import nltk
 from rouge_score import rouge_scorer
@@ -13,7 +13,7 @@ nltk.download("punkt")
 
 app = Flask(__name__)
 
-# Load models once for better performance
+# Load models once to improve performance
 try:
     abstractive_summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
     extractive_summarizer = Summarizer()
@@ -23,7 +23,7 @@ except Exception as e:
     extractive_summarizer = None
 
 def extract_text_from_pdf(pdf_file):
-    """Extracts text from a PDF file."""
+    """Extract text from a PDF file."""
     text = ""
     try:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -33,23 +33,23 @@ def extract_text_from_pdf(pdf_file):
                 text += extracted_text + "\n"
     except Exception as e:
         print(f"PDF extraction failed: {e}")
-        return None  # Handle errors gracefully
+        return None
     return text.strip()
 
 def compute_rouge(reference, generated):
-    """Computes ROUGE scores."""
+    """Compute ROUGE scores."""
     scorer = rouge_scorer.RougeScorer(["rouge1", "rouge2", "rougeL"], use_stemmer=True)
     scores = scorer.score(reference, generated)
     return {key: round(scores[key].fmeasure, 4) for key in scores}
 
 def compute_bleu(reference, generated):
-    """Computes BLEU score."""
-    reference_tokens = [sent_tokenize(reference)]
-    generated_tokens = sent_tokenize(generated)
-    return round(sentence_bleu(reference_tokens, generated_tokens) * 100, 2)
+    """Compute BLEU score."""
+    reference_tokens = [word_tokenize(reference)]
+    generated_tokens = word_tokenize(generated)
+    return round(sentence_bleu([reference_tokens], generated_tokens) * 100, 2)
 
 def compute_precision_recall(reference, generated):
-    """Computes Precision and Recall."""
+    """Compute Precision and Recall."""
     reference_words = set(word_tokenize(reference.lower()))
     generated_words = set(word_tokenize(generated.lower()))
 
@@ -67,7 +67,7 @@ def summarize():
     text = ""
     summary_type = request.form.get("type") or request.json.get("type", "").lower()
 
-    # Handle file or text input
+    # Handle file upload
     if "file" in request.files:
         pdf_file = request.files["file"]
         text = extract_text_from_pdf(pdf_file)
@@ -80,8 +80,7 @@ def summarize():
     if not text:
         return jsonify({"error": "No text provided"}), 400
 
-    # Generate reference summary (first 3 sentences for evaluation)
-    reference_summary = " ".join(sent_tokenize(text)[:3])
+    reference_summary = " ".join(sent_tokenize(text)[:3])  # First 3 sentences as reference
 
     try:
         summary_text = ""
@@ -107,7 +106,6 @@ def summarize():
     bleu_score = compute_bleu(reference_summary, summary_text)
     precision_recall = compute_precision_recall(reference_summary, summary_text)
 
-    # Calculate average score
     average_score = (
         rouge_scores["rouge1"] +
         rouge_scores["rouge2"] +
